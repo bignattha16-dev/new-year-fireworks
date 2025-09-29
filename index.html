@@ -4,10 +4,84 @@
 <meta charset="UTF-8">
 <title>เว็บพลุปีใหม่ 2025</title>
 <style>
-body,html{margin:0;padding:0;background:#000;overflow:hidden;font-family:sans-serif;color:#fff;}
-#controls{position:fixed;top:10px;left:50%;transform:translateX(-50%);z-index:10;background:rgba(0,0,0,0.5);padding:10px 20px;border-radius:10px;}
-#countdown{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);font-size:3em;font-weight:bold;color:#fff;text-shadow:0 0 20px #f00,0 0 40px #ff0;z-index:20;}
-canvas{display:block;}
+/* Global */
+body, html {
+  margin: 0;
+  padding: 0;
+  background: #000;
+  overflow: hidden;
+  font-family: sans-serif;
+  color: #fff;
+}
+
+/* Controls */
+#controls {
+  position: fixed;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  background: rgba(0,0,0,0.5);
+  padding: 12px 24px;
+  border-radius: 12px;
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* Countdown */
+#countdown {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-weight: bold;
+  color: #fff;
+  text-shadow: 0 0 20px #f00, 0 0 40px #ff0;
+  z-index: 20;
+  text-align: center;
+  font-size: 3em;
+}
+
+/* Canvas */
+canvas {
+  display: block;
+}
+
+/* Buttons */
+#controls button {
+  cursor: pointer;
+  font-size: 1em;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 8px;
+  background: #222;
+  color: #fff;
+  transition: 0.2s;
+}
+#controls button:hover {
+  background: #555;
+}
+
+/* Media Queries สำหรับมือถือและแท็บเล็ต */
+@media (max-width: 1024px) {
+  #countdown { font-size: 2.5em; }
+  #controls { padding: 10px 20px; gap: 8px; }
+  #controls button { font-size: 0.95em; padding: 7px 14px; }
+}
+
+@media (max-width: 768px) {
+  #countdown { font-size: 2em; }
+  #controls { flex-direction: column; top: 5px; padding: 8px 16px; }
+  #controls button { width: 100%; font-size: 0.9em; padding: 8px 0; }
+}
+
+@media (max-width: 480px) {
+  #countdown { font-size: 1.5em; text-shadow: 0 0 10px #f00, 0 0 20px #ff0; }
+  #controls { top: 5px; padding: 6px 12px; }
+  #controls button { font-size: 0.85em; padding: 6px 0; }
+}
 </style>
 </head>
 <body>
@@ -30,14 +104,21 @@ function rand(min,max){return Math.random()*(max-min)+min;}
 class Particle {
   constructor(x,y,angle,speed,color,life,gravity=false){
     this.x = x; this.y = y;
-    this.vx = Math.cos(angle)*speed; this.vy = Math.sin(angle)*speed;
-    this.color = color; this.life = life; this.alpha = 1; this.gravity = gravity;
-    this.prevX = x; this.prevY = y;
+    this.vx = Math.cos(angle)*speed;
+    this.vy = Math.sin(angle)*speed;
+    this.color = color;
+    this.life = life;
+    this.alpha = 1;
+    this.gravity = gravity;
+    this.prevX = x;
+    this.prevY = y;
     this.hue = parseInt(color.match(/\d+/));
   }
   update(){
-    this.prevX = this.x; this.prevY = this.y;
-    this.x += this.vx; this.y += this.vy;
+    this.prevX = this.x;
+    this.prevY = this.y;
+    this.x += this.vx;
+    this.y += this.vy;
     if(this.gravity) this.vy += 0.05;
     this.life -= 16;
     this.alpha = Math.max(0,this.life/1000);
@@ -60,7 +141,7 @@ class Firework {
   constructor(x,y,targetY,color,type){
     this.x = x; this.y = y; this.targetY = targetY;
     this.color = color; this.exploded = false;
-    this.type = type; // type เพื่อกำหนดขนาดเสียง
+    this.type = type;
   }
   update(){
     this.y -= 5;
@@ -76,14 +157,12 @@ class Firework {
     ctx.restore();
   }
   explode(){
-    // สร้างเสียง Boom ตาม type ของพลุ
     let boom = new Audio('https://www.soundjay.com/mechanical/sounds/explosion-01.mp3');
-    if(this.type==='heart') boom.volume = 1.0;       // Heart ใหญ่ที่สุด
-    else if(this.type==='star') boom.volume = 0.8;   // Star ขนาดกลาง
-    else boom.volume = 0.6;                          // Circle เล็ก
+    if(this.type==='heart') boom.volume = 1.0;
+    else if(this.type==='star') boom.volume = 0.8;
+    else boom.volume = 0.6;
     boom.play().catch(()=>{});
 
-    // สร้าง particle
     if(this.type==='heart') explodeHeart(this.x,this.y,this.color);
     else if(this.type==='star') explodeStar(this.x,this.y,this.color);
     else explodeCircle(this.x,this.y,this.color);
@@ -131,12 +210,10 @@ function launchMultiple(count=3){
 }
 
 function launch(x=Math.random()*W,y=H){
-  // เสียง Launch
   let launchSound = new Audio('https://www.soundjay.com/mechanical/sounds/rocket-1.mp3');
   launchSound.volume = 0.5;
   launchSound.play().catch(()=>{});
 
-  // กำหนด type ของพลุแบบสุ่ม
   let typeRand = Math.random();
   let type = typeRand<0.25?'heart':(typeRand<0.5?'star':'circle');
   fireworks.push(new Firework(x,y,rand(H/4,H/2),`hsl(${rand(0,360)},100%,50%)`,type));
@@ -184,7 +261,11 @@ function updateCountdown(){
 setInterval(updateCountdown,1000);
 updateCountdown();
 
-window.addEventListener('resize',()=>{ W=canvas.width=window.innerWidth; H=canvas.height=window.innerHeight; });
+// Responsive canvas
+window.addEventListener('resize',()=>{
+  W = canvas.width = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+});
 </script>
 </body>
 </html>
