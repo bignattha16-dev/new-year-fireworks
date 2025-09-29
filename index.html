@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>เว็บพลุปีใหม่ 2025</title>
+<style>
+body,html{margin:0;padding:0;background:#000;overflow:hidden;font-family:sans-serif;color:#fff;}
+#controls{position:fixed;top:10px;left:50%;transform:translateX(-50%);z-index:10;background:rgba(0,0,0,0.5);padding:10px 20px;border-radius:10px;}
+#countdown{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);font-size:3em;font-weight:bold;color:#fff;text-shadow:0 0 20px #f00,0 0 40px #ff0;z-index:20;}
+canvas{display:block;}
+</style>
+</head>
+<body>
+<div id="controls">
+  <button id="toggleMode">Auto: ON</button>
+  <button id="launchBtn">Launch Firework</button>
+</div>
+<div id="countdown"></div>
+<canvas id="canvas"></canvas>
+
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let W = canvas.width = window.innerWidth;
+let H = canvas.height = window.innerHeight;
+
+function rand(min,max){return Math.random()*(max-min)+min;}
+
+// Particle class
+class Particle {
+  constructor(x,y,angle,speed,color,life,gravity=false){
+    this.x = x; this.y = y;
+    this.vx = Math.cos(angle)*speed; this.vy = Math.sin(angle)*speed;
+    this.color = color; this.life = life; this.alpha = 1; this.gravity = gravity;
+    this.prevX = x; this.prevY = y;
+    this.hue = parseInt(color.match(/\d+/));
+  }
+  update(){
+    this.prevX = this.x; this.prevY = this.y;
+    this.x += this.vx; this.y += this.vy;
+    if(this.gravity) this.vy += 0.05;
+    this.life -= 16;
+    this.alpha = Math.max(0,this.life/1000);
+    this.hue += 2;
+  }
+  draw(ctx){
+    ctx.save();
+    ctx.globalAlpha = this.alpha;
+    ctx.strokeStyle = `hsl(${this.hue},100%,50%)`;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(this.prevX,this.prevY);
+    ctx.lineTo(this.x,this.y);
+    ctx.stroke();
+    ctx.restore();
+  }
+}
+
+class Firework {
+  constructor(x,y,targetY,color,type){
+    this.x = x; this.y = y; this.targetY = targetY;
+    this.color = color; this.exploded = false;
+    this.type = type; // type เพื่อกำหนดขนาดเสียง
+  }
+  update(){
+    this.y -= 5;
+    if(this.y <= this.targetY && !this.exploded){
+      this.explode(); 
+      this.exploded = true;
+    }
+  }
+  draw(ctx){
+    ctx.save();
+    ctx.fillStyle = this.color;
+    ctx.fillRect(this.x,this.y,2,10);
+    ctx.restore();
+  }
+  explode(){
+    // สร้างเสียง Boom ตาม type ของพลุ
+    let boom = new Audio('https://www.soundjay.com/mechanical/sounds/explosion-01.mp3');
+    if(this.type==='heart') boom.volume = 1.0;       // Heart ใหญ่ที่สุด
+    else if(this.type==='star') boom.volume = 0.8;   // Star ขนาดกลาง
+    else boom.volume = 0.6;                          // Circle เล็ก
+    boom.play().catch(()=>{});
+
+    // สร้าง particle
+    if(this.type==='heart') explodeHeart(this.x,this.y,this.color);
+    else if(this.type==='star') explodeStar(this.x,this.y,this.color);
+    else explodeCircle(this.x,this.y,this.color);
+  }
+}
+
+let fireworks = [], particles = [];
+const maxParticles = 600;
+
+function explodeCircle(x,y,color){
+  for(let i=0;i<30;i++){
+    if(particles.length >= maxParticles) break;
+    let angle = rand(0,Math.PI*2);
+    let speed = rand(1,4);
+    particles.push(new Particle(x,y,angle,speed,color,rand(800,1500),true));
+  }
+}
+
+function explodeHeart(x,y,color){
+  for(let i=0;i<80;i++){
+    if(particles.length >= maxParticles) break;
+    let t = rand(0,Math.PI*2);
+    let px = 16*Math.pow(Math.sin(t),3);
+    let py = -(13*Math.cos(t)-5*Math.cos(2*t)-2*Math.cos(3*t)-Math.cos(4*t));
+    particles.push(new Particle(x+px*4,y+py*4,rand(0,6.28),rand(1,3),color,rand(800,1500),true));
+  }
+}
+
+function explodeStar(x,y,color){
+  for(let i=0;i<60;i++){
+    if(particles.length >= maxParticles) break;
+    let angle = rand(0,Math.PI*2);
+    let radius = rand(10,20);
+    let px = Math.cos(angle)*radius;
+    let py = Math.sin(angle)*radius;
+    particles.push(new Particle(x+px,y+py,rand(0,6.28),rand(1,3),color,rand(800,1500),true));
+  }
+}
+
+// Launch หลายจุด
+function launchMultiple(count=3){
+  for(let i=0;i<count;i++){
+    launch();
+  }
+}
+
+function launch(x=Math.random()*W,y=H){
+  // เสียง Launch
+  let launchSound = new Audio('https://www.soundjay.com/mechanical/sounds/rocket-1.mp3');
+  launchSound.volume = 0.5;
+  launchSound.play().catch(()=>{});
+
+  // กำหนด type ของพลุแบบสุ่ม
+  let typeRand = Math.random();
+  let type = typeRand<0.25?'heart':(typeRand<0.5?'star':'circle');
+  fireworks.push(new Firework(x,y,rand(H/4,H/2),`hsl(${rand(0,360)},100%,50%)`,type));
+}
+
+// Animate
+function animate(){
+  ctx.fillStyle='rgba(0,0,0,0.18)';
+  ctx.fillRect(0,0,W,H);
+
+  for(let i=fireworks.length-1;i>=0;i--){
+    fireworks[i].update(); fireworks[i].draw(ctx);
+    if(fireworks[i].exploded) fireworks.splice(i,1);
+  }
+
+  for(let i=particles.length-1;i>=0;i--){
+    particles[i].update(); particles[i].draw(ctx);
+    if(particles[i].life <= 0) particles.splice(i,1);
+  }
+
+  requestAnimationFrame(animate);
+}
+
+animate();
+
+// Controls
+document.getElementById('launchBtn').onclick = ()=>launchMultiple(rand(2,4));
+let auto = true;
+let toggleBtn = document.getElementById('toggleMode');
+toggleBtn.onclick = () => { auto = !auto; toggleBtn.textContent = `Auto: ${auto?"ON":"OFF"}`; };
+setInterval(()=>{ if(auto) launchMultiple(rand(1,3)); },2200);
+
+// Countdown
+function updateCountdown(){
+  let now = new Date();
+  let target = new Date('Jan 1, 2026 00:00:00');
+  let diff = target - now;
+  if(diff<=0){ document.getElementById('countdown').textContent='Happy New Year 2026!'; return; }
+  let d=Math.floor(diff/86400000);
+  let h=Math.floor((diff%86400000)/3600000);
+  let m=Math.floor((diff%3600000)/60000);
+  let s=Math.floor((diff%60000)/1000);
+  document.getElementById('countdown').textContent=`${d}d ${h}h ${m}m ${s}s`;
+}
+setInterval(updateCountdown,1000);
+updateCountdown();
+
+window.addEventListener('resize',()=>{ W=canvas.width=window.innerWidth; H=canvas.height=window.innerHeight; });
+</script>
+</body>
+</html>
