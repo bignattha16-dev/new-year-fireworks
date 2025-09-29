@@ -5,99 +5,87 @@
 <title>เว็บพลุปีใหม่ 2025</title>
 <style>
 body, html {
-  margin: 0;
-  padding: 0;
-  background: radial-gradient(ellipse at center, #000 0%, #111 100%);
-  overflow: hidden;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  color: #fff;
+  margin:0; padding:0;
+  background: radial-gradient(circle at center, #000 0%, #111 100%);
+  overflow:hidden;
+  font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color:#fff;
 }
 
 /* Controls */
 #controls {
-  position: fixed;
-  top: 15px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 10;
+  position:fixed;
+  top:15px;
+  left:50%;
+  transform:translateX(-50%);
+  z-index:10;
   background: rgba(0,0,0,0.6);
-  padding: 12px 24px;
-  border-radius: 20px;
-  display: flex;
-  gap: 16px;
-  flex-wrap: wrap;
-  justify-content: center;
-  box-shadow: 0 4px 20px rgba(255,255,255,0.2);
+  padding:12px 24px;
+  border-radius:20px;
+  display:flex;
+  gap:16px;
+  flex-wrap:wrap;
+  justify-content:center;
+  box-shadow:0 4px 20px rgba(255,255,255,0.2);
 }
 
-/* Buttons สวยๆ */
+/* Buttons */
 #controls button {
-  cursor: pointer;
-  font-size: 1em;
-  padding: 12px 24px;
-  border: none;
-  border-radius: 12px;
-  background: linear-gradient(135deg,#ff416c,#ff4b2b);
-  color: #fff;
-  font-weight: bold;
-  box-shadow: 0 6px 20px rgba(255,75,43,0.6);
+  cursor:pointer;
+  font-size:1em;
+  padding:12px 24px;
+  border:none;
+  border-radius:12px;
+  background:linear-gradient(135deg,#ff416c,#ff4b2b);
+  color:#fff;
+  font-weight:bold;
+  box-shadow:0 6px 20px rgba(255,75,43,0.6);
   transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
+  position:relative;
+  overflow:hidden;
 }
 #controls button::after {
-  content: '';
-  position: absolute;
-  width: 100%;
-  height: 0;
-  top: 0;
-  left: 0;
+  content:'';
+  position:absolute;
+  width:100%; height:0;
+  top:0; left:0;
   background: rgba(255,255,255,0.2);
-  transition: 0.3s;
+  transition:0.3s;
 }
-#controls button:hover::after {
-  height: 100%;
-}
+#controls button:hover::after { height:100%; }
 #controls button:hover {
   transform: translateY(-3px);
-  box-shadow: 0 8px 25px rgba(255,75,43,0.8);
+  box-shadow:0 8px 25px rgba(255,75,43,0.8);
   background: linear-gradient(135deg,#ff4b2b,#ff416c);
 }
 
 /* Countdown */
 #countdown {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  font-weight: bold;
-  text-align: center;
-  color: #fff;
+  position:fixed;
+  top:50%;
+  left:50%;
+  transform:translate(-50%,-50%);
+  font-weight:bold;
+  text-align:center;
+  color:#fff;
   text-shadow: 0 0 20px #f00, 0 0 40px #ff0, 0 0 60px #fff;
-  z-index: 20;
-  font-size: 3em;
+  z-index:20;
+  font-size:3em;
 }
 
 /* Canvas */
-canvas { display: block; }
+canvas { display:block; }
 
 /* Media Queries */
-@media (max-width: 1024px) {
-  #countdown { font-size: 2.5em; }
-  #controls { padding: 10px 20px; gap: 10px; }
-  #controls button { font-size: 0.95em; padding: 10px 20px; }
+@media(max-width:768px){
+  #countdown{font-size:2em;}
+  #controls{flex-direction:column;top:10px;padding:8px 16px;}
+  #controls button{width:100%;font-size:0.9em;padding:10px 0;}
 }
-
-@media (max-width: 768px) {
-  #countdown { font-size: 2em; }
-  #controls { flex-direction: column; top: 10px; padding: 8px 16px; }
-  #controls button { width: 100%; font-size: 0.9em; padding: 10px 0; }
-}
-
-@media (max-width: 480px) {
-  #countdown { font-size: 1.5em; text-shadow: 0 0 10px #f00, 0 0 20px #ff0, 0 0 30px #fff; }
-  #controls { top: 5px; padding: 6px 12px; }
-  #controls button { font-size: 0.85em; padding: 8px 0; }
+@media(max-width:480px){
+  #countdown{font-size:1.5em;text-shadow:0 0 10px #f00,0 0 20px #ff0,0 0 30px #fff;}
+  #controls{top:5px;padding:6px 12px;}
+  #controls button{font-size:0.85em;padding:8px 0;}
 }
 </style>
 </head>
@@ -109,34 +97,33 @@ canvas { display: block; }
 </div>
 <div id="countdown"></div>
 <canvas id="canvas"></canvas>
-
 <script>
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 let W = canvas.width = window.innerWidth;
 let H = canvas.height = window.innerHeight;
 
+// Random
 function rand(min,max){return Math.random()*(max-min)+min;}
 
 // Audio
-let audioContext;
-let audioEnabled = true;
-function playSound(url, volume=1){
-  if(!audioEnabled) return;
+let audioContext, audioEnabled = true;
+function initAudio(){
   if(!audioContext){
     audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    if(audioContext.state === 'suspended') audioContext.resume();
   }
-  fetch(url)
-    .then(r=>r.arrayBuffer())
-    .then(data=>audioContext.decodeAudioData(data))
-    .then(buffer=>{
-      const source = audioContext.createBufferSource();
-      source.buffer = buffer;
-      const gainNode = audioContext.createGain();
-      gainNode.gain.value = volume;
-      source.connect(gainNode).connect(audioContext.destination);
-      source.start(0);
-    }).catch(e=>console.log(e));
+}
+function playSound(url,volume=1){
+  if(!audioEnabled || !audioContext) return;
+  fetch(url).then(r=>r.arrayBuffer()).then(d=>audioContext.decodeAudioData(d)).then(buf=>{
+    const s = audioContext.createBufferSource();
+    s.buffer = buf;
+    const g = audioContext.createGain();
+    g.gain.value = volume;
+    s.connect(g).connect(audioContext.destination);
+    s.start(0);
+  }).catch(e=>console.log(e));
 }
 
 // Particle
@@ -177,8 +164,7 @@ class Particle{
 class Firework{
   constructor(x,y,targetY,color,type){
     this.x=x; this.y=y; this.targetY=targetY;
-    this.color=color; this.exploded=false;
-    this.type=type;
+    this.color=color; this.exploded=false; this.type=type;
   }
   update(){
     this.y-=5;
@@ -187,32 +173,28 @@ class Firework{
     }
   }
   draw(ctx){
-    ctx.save();
-    ctx.fillStyle=this.color;
-    ctx.fillRect(this.x,this.y,2,10);
-    ctx.restore();
+    ctx.save(); ctx.fillStyle=this.color; ctx.fillRect(this.x,this.y,2,10); ctx.restore();
   }
   explode(){
-    if(this.type==='heart') playSound('https://www.soundjay.com/mechanical/sounds/explosion-01.mp3',1.0);
-    else if(this.type==='star') playSound('https://www.soundjay.com/mechanical/sounds/explosion-01.mp3',0.8);
-    else playSound('https://www.soundjay.com/mechanical/sounds/explosion-01.mp3',0.6);
-
+    if(this.type==='heart') playSound('https://www.soundjay.com/explosion/sounds/explosion-01.mp3',1.0);
+    else if(this.type==='star') playSound('https://www.soundjay.com/explosion/sounds/explosion-01.mp3',0.8);
+    else playSound('https://www.soundjay.com/explosion/sounds/explosion-01.mp3',0.6);
     if(this.type==='heart') explodeHeart(this.x,this.y,this.color);
     else if(this.type==='star') explodeStar(this.x,this.y,this.color);
     else explodeCircle(this.x,this.y,this.color);
   }
 }
 
-let fireworks=[],particles=[];
+// Arrays
+let fireworks=[], particles=[];
 const maxParticles=600;
 
 // Particle shapes
 function explodeCircle(x,y,color){
   for(let i=0;i<30;i++){
     if(particles.length>=maxParticles) break;
-    let angle=rand(0,Math.PI*2);
-    let speed=rand(1,4);
-    particles.push(new Particle(x,y,angle,speed,color,rand(800,1500),true));
+    let a=rand(0,Math.PI*2), s=rand(1,4);
+    particles.push(new Particle(x,y,a,s,color,rand(800,1500),true));
   }
 }
 function explodeHeart(x,y,color){
@@ -227,36 +209,27 @@ function explodeHeart(x,y,color){
 function explodeStar(x,y,color){
   for(let i=0;i<60;i++){
     if(particles.length>=maxParticles) break;
-    let angle=rand(0,Math.PI*2);
-    let radius=rand(10,20);
-    let px=Math.cos(angle)*radius;
-    let py=Math.sin(angle)*radius;
+    let a=rand(0,Math.PI*2), r=rand(10,20);
+    let px=Math.cos(a)*r, py=Math.sin(a)*r;
     particles.push(new Particle(x+px,y+py,rand(0,6.28),rand(1,3),color,rand(800,1500),true));
   }
 }
 
 // Launch
-function launchMultiple(count=3){for(let i=0;i<count;i++) launch();}
 function launch(x=Math.random()*W,y=H){
   playSound('https://www.soundjay.com/mechanical/sounds/rocket-1.mp3',0.5);
   let typeRand=Math.random();
   let type=typeRand<0.25?'heart':(typeRand<0.5?'star':'circle');
   fireworks.push(new Firework(x,y,rand(H/4,H/2),`hsl(${rand(0,360)},100%,50%)`,type));
 }
+function launchMultiple(count=3){for(let i=0;i<count;i++) launch();}
 
 // Animate
 function animate(){
   ctx.fillStyle='rgba(0,0,0,0.18)';
   ctx.fillRect(0,0,W,H);
-
-  for(let i=fireworks.length-1;i>=0;i--){
-    fireworks[i].update(); fireworks[i].draw(ctx);
-    if(fireworks[i].exploded) fireworks.splice(i,1);
-  }
-  for(let i=particles.length-1;i>=0;i--){
-    particles[i].update(); particles[i].draw(ctx);
-    if(particles[i].life<=0) particles.splice(i,1);
-  }
+  for(let i=fireworks.length-1;i>=0;i--){fireworks[i].update(); fireworks[i].draw(ctx); if(fireworks[i].exploded) fireworks.splice(i,1);}
+  for(let i=particles.length-1;i>=0;i--){particles[i].update(); particles[i].draw(ctx); if(particles[i].life<=0) particles.splice(i,1);}
   requestAnimationFrame(animate);
 }
 animate();
@@ -266,26 +239,12 @@ const launchBtn=document.getElementById('launchBtn');
 const toggleBtn=document.getElementById('toggleMode');
 const soundBtn=document.getElementById('soundBtn');
 
-launchBtn.onclick=()=>{
-  if(!audioContext) audioContext=new (window.AudioContext || window.webkitAudioContext)();
-  launchMultiple(rand(2,4));
-};
-
+launchBtn.onclick=()=>{initAudio(); launchMultiple(rand(2,4));};
 let auto=true;
-toggleBtn.onclick=()=>{
-  auto=!auto;
-  toggleBtn.textContent=`🎇 อัตโนมัติ: ${auto ? "เปิด" : "ปิด"}`;
-  if(!audioContext) audioContext=new (window.AudioContext || window.webkitAudioContext)();
-};
+toggleBtn.onclick=()=>{initAudio(); auto=!auto; toggleBtn.textContent=`🎇 อัตโนมัติ: ${auto?"เปิด":"ปิด"}`;};
+soundBtn.onclick=()=>{initAudio(); audioEnabled=!audioEnabled; soundBtn.textContent=`🎵 เสียง: ${audioEnabled?"เปิด":"ปิด"}`;};
 
-soundBtn.onclick = () => {
-  audioEnabled = !audioEnabled;
-  soundBtn.textContent = `🎵 เสียง: ${audioEnabled ? "เปิด" : "ปิด"}`;
-  if(audioEnabled && audioContext && audioContext.state === 'suspended'){
-    audioContext.resume();
-  }
-};
-
+// Auto launch
 setInterval(()=>{if(auto) launchMultiple(rand(1,3));},2200);
 
 // Countdown
@@ -293,7 +252,7 @@ function updateCountdown(){
   let now=new Date();
   let target=new Date('Jan 1, 2026 00:00:00');
   let diff=target-now;
-  if(diff<=0){document.getElementById('countdown').textContent='🎉 Happy New Year 2026! 🎉';return;}
+  if(diff<=0){document.getElementById('countdown').textContent='🎉 Happy New Year 2026! 🎉'; return;}
   let d=Math.floor(diff/86400000);
   let h=Math.floor((diff%86400000)/3600000);
   let m=Math.floor((diff%3600000)/60000);
@@ -303,7 +262,7 @@ function updateCountdown(){
 setInterval(updateCountdown,1000);
 updateCountdown();
 
-// Responsive canvas
+// Responsive
 window.addEventListener('resize',()=>{W=canvas.width=window.innerWidth; H=canvas.height=window.innerHeight;});
 </script>
 </body>
